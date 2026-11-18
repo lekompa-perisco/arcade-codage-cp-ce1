@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arcade · Mon cahier de code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Press+Start+2P&display=swap">
+<style>
+/* Cahier d'activités Arcade : même univers pixel que les séances, mise en page « Mes jeux ». */
+:root{
+  --space:#140c3c; --panel:#2a1a78; --panel-hi:#4630b4; --panel-lo:#211563; --ink:#120a2e;
+  --text:#ffffff; --muted:#cfc6ff; --yellow:#ffd23f; --yellow-lo:#e09a1a;
+  --pink:#ff6fb0; --cyan:#7ff7ff; --green:#5fd35a; --green-lo:#2e9a36; --cream:#fff1b0; --purple:#8a3ccc;
+  --f-pixel:"Press Start 2P", ui-monospace, "Courier New", monospace;
+  --f-read:"Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--space);color:var(--text);font-family:var(--f-read);font-size:20px;line-height:1.35;-webkit-tap-highlight-color:transparent}
+body::after{content:"";position:fixed;inset:0;z-index:-1;background:var(--space) var(--bgimg) center bottom/cover no-repeat;image-rendering:pixelated;opacity:.35}
+img{image-rendering:pixelated}
+#app{max-width:1200px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:26px}
+header{display:flex;align-items:center;gap:12px}
+.logo-svg{height:clamp(44px,7vh,64px);width:auto;display:block}
+.score{display:flex;align-items:center;gap:8px;font-family:var(--f-pixel);font-size:12px;color:var(--ink);background:var(--yellow);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:10px 12px}
+.score b{font-size:16px}
+.icon-btn{min-width:48px;height:48px;display:grid;place-items:center;background:var(--panel);border:3px solid var(--ink);box-shadow:inset 0 0 0 2px var(--panel-hi),3px 3px 0 var(--ink);color:var(--text);cursor:pointer;font-family:var(--f-pixel);font-size:14px}
+h1,h2,h3{font-family:var(--f-pixel);font-weight:400;line-height:1.5;margin:0;text-wrap:balance}
+h1{font-size:clamp(20px,4vw,40px);color:var(--yellow);text-shadow:5px 5px 0 var(--ink)}
+h2{font-size:clamp(12px,1.8vw,17px);color:var(--cyan);text-shadow:3px 3px 0 var(--ink)}
+.lead{margin:10px 0 0;color:var(--muted);font-size:19px}
+.panel{background:var(--panel);border:4px solid var(--ink);box-shadow:inset 0 0 0 3px var(--panel-hi),6px 6px 0 var(--ink);padding:18px}
+.paper{background:var(--cream);color:var(--ink);border:5px solid var(--ink);box-shadow:7px 7px 0 var(--ink);padding:22px 24px}
+.btn{font-family:var(--f-pixel);font-size:13px;line-height:1.4;padding:16px 18px;min-height:56px;border:4px solid var(--ink);background:var(--yellow);color:var(--ink);text-decoration:none;
+  box-shadow:inset -4px -4px 0 var(--yellow-lo),inset 4px 4px 0 #fff4b8,4px 4px 0 var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;text-align:center}
+.btn:active{transform:translate(3px,3px)}
+.btn.go{background:var(--green);box-shadow:inset -4px -4px 0 var(--green-lo),inset 4px 4px 0 #b6f5a8,4px 4px 0 var(--ink)}
+.btn.ghost{background:var(--panel-lo);color:var(--text);box-shadow:inset 0 0 0 2px var(--panel-hi),4px 4px 0 var(--ink)}
+.btn.sm{min-height:44px;padding:10px 12px;font-size:9px}
+.btn:disabled{filter:grayscale(.8);opacity:.45;cursor:not-allowed;transform:none}
+.btn:focus-visible,.icon-btn:focus-visible,.page:focus-visible{outline:4px solid var(--cyan);outline-offset:3px}
+
+/* Reprendre */
+.resume{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.resume .txt{flex:1;min-width:240px;display:flex;flex-direction:column;gap:8px}
+.resume .k{font-family:var(--f-pixel);font-size:10px;color:var(--purple)}
+.resume .t{font-weight:700;font-size:22px}
+.resume .s{color:#5a4a8a;font-size:18px}
+.resume img{width:64px}
+
+/* Barre du parcours */
+.track{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.track h2{color:var(--yellow)}
+.bar{flex:1;min-width:140px;max-width:320px;height:20px;background:var(--panel-lo);border:3px solid var(--ink);display:flex;gap:2px;padding:2px}
+.bar i{flex:1;background:transparent}
+.bar i.on{background:var(--yellow)}
+.track .pct{font-family:var(--f-pixel);font-size:10px;color:var(--muted)}
+.nav{margin-left:auto;display:flex;align-items:center;gap:10px}
+.nav .pos{font-family:var(--f-pixel);font-size:10px;color:var(--muted)}
+
+/* Séance mise en avant */
+.feature{display:grid;grid-template-columns:minmax(220px,.42fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:820px){.feature{grid-template-columns:minmax(0,1fr)}}
+.scard{display:flex;flex-direction:column;border:5px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--green);overflow:hidden;position:relative}
+.scard .top{background:var(--yellow);padding:16px 12px 26px;text-align:center;font-family:var(--f-pixel);font-size:clamp(14px,1.8vw,20px);color:var(--ink)}
+.scard .ribbon{position:absolute;left:-10px;right:-10px;top:60px;transform:rotate(-4deg);background:var(--ink);color:var(--yellow);font-family:var(--f-pixel);font-size:10px;text-align:center;padding:9px 0;letter-spacing:.5px}
+.scard .ribbon.done{color:var(--green)}
+.scard .ribbon.lock{color:var(--muted)}
+.scard .pic{margin:28px 16px 0;aspect-ratio:1.15;background:var(--space) var(--bgimg) center/cover;border:4px solid var(--ink);position:relative;overflow:hidden}
+.scard .pic img{position:absolute}
+.scard .name{padding:14px 12px 18px;text-align:center;font-family:var(--f-pixel);font-size:clamp(10px,1.2vw,13px);line-height:1.7;color:var(--ink)}
+.scard.lock{background:#4a4470}
+.scard.lock .pic{filter:grayscale(1) brightness(.6)}
+.scard.lock .top{background:#b9b2d8}
+.detail{display:flex;flex-direction:column;gap:16px}
+.detail p{margin:0;font-size:20px;line-height:1.5}
+.motdujour{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:600}
+.motdujour b{font-family:var(--f-pixel);font-size:13px;color:#fff;background:var(--purple);border:3px solid var(--ink);padding:8px 10px}
+.etapes{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.etapes li{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.etapes .ic{width:34px;height:34px;display:grid;place-items:center;flex:none}
+.etapes .ic img{width:100%;height:100%;object-fit:contain}
+.etapes .nm{flex:1;font-weight:700;font-size:19px}
+.etapes .lv{color:#6a5a9a;font-size:16px}
+.badge{font-family:var(--f-pixel);font-size:8px;padding:7px 8px;border:2px solid var(--ink);white-space:nowrap;background:#d8d2ee;color:#4a4470}
+.badge.ok{background:var(--green);color:var(--ink)}
+.badge.todo{background:var(--yellow);color:var(--ink)}
+.locknote{font-weight:600;color:#6a5a9a}
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.actions .pts{font-family:var(--f-pixel);font-size:11px;color:var(--purple)}
+
+/* Toutes les pages du cahier */
+.pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:14px}
+.page{position:relative;aspect-ratio:.82;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px 8px;cursor:pointer;
+  background:var(--panel-lo);color:var(--muted);border:4px solid var(--ink);box-shadow:inset 0 0 0 2px var(--panel-hi),4px 4px 0 var(--ink);font-family:var(--f-read)}
+.page .n{font-family:var(--f-pixel);font-size:24px;color:inherit}
+.page .st{font-family:var(--f-pixel);font-size:7px;line-height:1.5;text-align:center}
+.page.open{background:var(--yellow);color:var(--ink);box-shadow:inset -4px -4px 0 var(--yellow-lo),inset 4px 4px 0 #fff4b8,4px 4px 0 var(--ink)}
+.page.done{background:var(--green);color:var(--ink);box-shadow:inset -4px -4px 0 var(--green-lo),inset 4px 4px 0 #b6f5a8,4px 4px 0 var(--ink)}
+.page.done::after{content:"✓";position:absolute;top:6px;right:8px;font-family:var(--f-pixel);font-size:14px}
+.page.lock{opacity:.6}
+.page.sel{outline:4px solid var(--cyan);outline-offset:3px}
+.foot{color:var(--muted);font-size:17px;line-height:1.5;max-width:820px}
+
+/* Menu intervenant */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(10,6,30,.75);display:grid;place-items:center;padding:16px}
+.overlay .panel{max-width:520px;display:flex;flex-direction:column;gap:14px}
+.overlay p{margin:0}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div id="logo"></div>
+    <div style="flex:1"></div>
+    <div class="score" aria-live="polite">★ <b id="total">0</b> pts</div>
+    <button class="icon-btn" id="adultBtn" aria-label="Menu intervenant">⚙</button>
+  </header>
+
+  <div>
+    <h1>MON CAHIER DE CODE</h1>
+    <p class="lead">CP · CE1 — Apprends à coder avec le Professeur Pile Poil, une séance après l'autre.</p>
+  </div>
+
+  <section class="paper resume" id="resume" hidden></section>
+
+  <section class="stack" style="display:flex;flex-direction:column;gap:18px">
+    <div class="track">
+      <h2>PARCOURS CODAGE</h2>
+      <div class="bar" id="bar"></div>
+      <span class="pct" id="pct"></span>
+      <div class="nav">
+        <button class="btn ghost sm" id="prev">◀ Séance précédente</button>
+        <span class="pos" id="pos"></span>
+        <button class="btn ghost sm" id="next">Séance suivante ▶</button>
+      </div>
+    </div>
+    <div class="feature" id="feature"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2>TOUTES LES SÉANCES</h2>
+    <div class="pages" id="pages"></div>
+  </section>
+
+  <p class="foot">Ce cahier d'activités accompagne les enfants de CP et de CE1 pour apprendre à coder et développer leur logique algorithmique.
+  Chaque séance se valide automatiquement à la fin, sur cette tablette, et ouvre la suivante.</p>
+</div>
+
+<script>
+/* =====================================================================
+   LES SÉANCES DU CAHIER
+   Pour ajouter une séance : remplis titre, url (dossier de la séance), cle
+   (la clé de sauvegarde utilisée par la séance), resume, mot et etapes.
+   Une séance sans url s'affiche « Bientôt ».
+   ===================================================================== */
+const TOTAL = 30;
+const SEANCES = [
+  {
+    n: 1,
+    titre: "Le voyage du Professeur Pile Poil",
+    url: "seance-1/index.html",
+    cle: "arcade-seance1",
+    max: 20,
+    image: "fusee",
+    resume: "La fusée du Professeur Pile Poil s'est arrêtée sur Saturne au lieu d'aller sur Terre : il manque des instructions dans son programme ! Trouve le bug, répare la fusée en 3 défis, puis programme le voyage jusqu'à la Terre.",
+    mot: "ALGORITHME",
+    ecrans: {intro:"L'histoire", step2:"La devinette", hub:"La fusée", defi1:"Défi 1 · La clé à molette", defi2:"Défi 2 · Le plein de carburant", defi3:"Défi 3 · Le panneau d'allumage", step4:"Cap sur la Terre", bilan:"Le bilan"},
+    etapes: [
+      {nom:"La devinette : trouve le bug", niveau:"facile", pts:["q1","q2"], img:"saturne"},
+      {nom:"Défi 1 · La clé à molette", niveau:"facile", pts:["d1"], img:"fusee"},
+      {nom:"Défi 2 · Le plein de carburant", niveau:"moyen", pts:["d2"], img:"fusee"},
+      {nom:"Défi 3 · Le panneau d'allumage", niveau:"moyen", pts:["d3"], img:"fusee"},
+      {nom:"Cap sur la Terre", niveau:"difficile", pts:["pos","trip"], img:"terre"},
+    ],
+  },
+  // { n: 2, titre: "…", url: "seance-2/index.html", cle: "arcade-seance2", max: 20, image: "fusee", resume: "…", mot: "…", ecrans: {}, etapes: [] },
+];
+
+/* ---------- Images et logo (repris de la séance 1) ---------- */
+const A = {"bg": "data:image/png;base64,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", "prof": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAABBCAYAAAC9zNZMAAADV0lEQVR42u2av2vbQBTHn4zpkkLkwWSQoIEOAZeCoUjeTP+LjEno0qVTxoaWgAtZPHXpZrzZQ9fS0i1TIhdq4iYk0IILMrh0sALer0P066T7Lcl1i74grDufdB+9e/fuh6SBoHpLhETLHtzXNMgoTQYoWaGhW2jmjTTR8rmBBZUcmXaYN/NGmqFbCADAXThg1uxUPgBAx3Vysx4RytAtFFcyTcsPIGVcQBmKp+vreXFwqlA0qcJVVHtelodmKe6nhVlL1mqGbiF0MUCGbqEKCcpdOOzHmgzvjuQ5Re7CAR6coVvIPT1Mh4veEqEj0wYhKJoe7zIvNWs2dFwHCyFh6PGhzHYXZt5Iq0o5CccyMBly4VhWojp/JijZchxhFpt5I82s2chdOHBz8wt2drbwpmh3I7+JPSktHwDC+5g1G/zhCwmDkRwfg5oMwWx34f008j9zOxqmkvnuaeRvwX384Qul/Jln4d6S3t29wQkydAudeQj7Dbp2Mt8bnFDv1VuyhzUpH9tsbBOtE1c8P16eFj5IPTY+UxHule7pIdZ8gS/R8nObj9HimFmzqZXdXk2p1jHbXfK9BKyVsljHjeZXsk1MC6i8Jsw0yAaOji4G7EHRL0MaiEUcngnGhYsBYIefnzuUyNTE0C0sTJDS1IfKCiYCR7JY3lBV2vIr6KUyIlWm6vBVWgX7GwD7hJu+PgcASA8jzz46cNyK0pc/bpm9NRkehJ6ap1dnd8e82QjPk/r23cvkV6kFbNL0/eG5cvTe220pW0tjQcWD5Jt3b4WBXj5/QfSvwpow3pTzZiM8RJpSNjRUoEAFHUDFUkpgxy12mgQnq0ItlkWFgT16uBmef/ryGdbKxzJbTGj1/b80ZQn2T4E9mW6UFhPW1tdL7DfvWLa2FquyYlhu68LMU+vExtvfDLoVf08M31PlSGa1rgxG3G4U2OxdjcViO4IAILWPWmi4wODWACodLgShZHxMNZYpxbGV+Fg5u1glWJFNqnFfyfl60LCw9M+rkdB/SYmuL6siF9GAk+/BVQBK5y/BSjBZMOkt74zXCb3kMnQL7TV/+6kP2H99qIfnT+/h/0HTLzNOf/uT+dseHIqs/rgOImVU4CqsCN0f17kVipQp5DMtkcheRPT/A9udo0OsRxeIAAAAAElFTkSuQmCC", "fusee": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAOCAYAAAAWo42rAAAAiUlEQVR42mNgQAPSAqb/pQVM/zPgA9ICpv9hAKdimKL67xCMrpiJgUjAgi7QwIFdIYaJLw21GV4aahM2Ufz8Vdwm4gsOmByTtIDp/7MKX3F64qzCVwZpAdP/pPv6rMJXBhlBM5ymMiK75ckhLhQFMnbfGJ5+OM2IEjxPP5xmlLH7hlURTl9iCwUA9qxDALxectQAAAAASUVORK5CYII=", "saturne": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAYCAYAAACSuF9OAAABmklEQVR42u2Wv0/CQBTHv9fgQKpJNxIh1sVVEwkuDv4BzE78Af4FMtTJgQ71n3DhT2BnlmAMgyEyCEkZSExkAQcHHMyVa+/ae1eUie/0cnm9+/T9yHvATtlim3xcdmor1fl03mNbBeIgYfcydj57egYAVJtfucFYHpgkiAqKg5lCWX8JAwCli/PI7gfF1LRuHKGyU1uFL9ck3+WwG9mjwRh13yZHyqKASDDurVGaO94iukfnW9B1T9/fkx0mD8aNwO+peuu7VVFjKhARotRoAu9d8sNiUQPA8PUjsq/ufczawbrovW8JrCDCSCAAKm4LukKmquK2EE7ufsHbQSxqHMrSwZgoGZ00KPENnhGenQLpJeeQ1FkHR/uxs9FgTPlU7rLpvMd4Pnk4AUThNWlzncSUibXEU0Yraq7PNzLMaDCO7LMbX/rZtKJmedo+BplVU8LjSQhS22fB9YMiCUJsc1GNR5s0cI1GRxZUGgiHoY4OZjpcO94CJ6fHylpRyWSO5V4/Ot6C5GsKs/GClgZW9+3tLWj/vcLupNMPyqnQvbHT5qEAAAAASUVORK5CYII=", "terre": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAABF0lEQVR42mNgoBFgJKRAWsD0Pzbxpx9O49XLQsjA2B2nUMS3b/sIYUxy/Y/PAkZchqIbiNVwBgaGN5NcsRrORKqhDAwMDJ5e/HC2SN5urMHFRKqh2MBfg2oMw5lwGdpuTpnhTLgUVp7EFONQSGTgUEgkyiImYoMA2cA9HxwZWK0C8LqaiRjbcbkSm+EEgwKXoVsuPCA+KIgF2Ax9eegAeQb/eDCfJJdiGIycm9DB+mkTsIo/6SggXAhJC5j+F8nbjdcVsMj6fWwD1iBgvtAKz94spHjv97ENeMMVZyFEyNX4DER2LdbSTVrA9P9fg2oGcTsHogzEZijeYvOvQTVRwYPNULw1CCxr4rKA+UIrA8kFPTWqJpoBAJjvgTRLuapBAAAAAElFTkSuQmCC"};
+const LOGO_SVG = "<svg class=\"logo-svg\" role=\"img\" aria-label=\"L'Arcade\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 377.56 142\">\n<defs>\n<style>\n.cls-1 {\nfill: #222120;\n}\n.cls-2 {\nfill: #fdc324;\n}\n.cls-3, .cls-4t{fill:#1d1d1b}\n.cls-4 {\nfill: #1d1d1b;\n}\n.cls-5 {\nfill: #e94e1b;\n}\n.cls-6 {\nletter-spacing: 0em;\n}\n.cls-7 {\nfill: #1aa7c6;\n}\n.cls-8 {\nletter-spacing: -.02em;\n}\n.cls-9 {\nletter-spacing: -.03em;\n}\n.cls-4t{fill:#1d1d1b}\n.cls-4 {\nfont-family: Bungee-Regular, Bungee;\nfont-size: 36.57px;\n}\n.cls-10 {\nletter-spacing: 0em;\n}\n.cls-11 {\nfill: #e94b2f;\n}\n.cls-12 {\nfill: #1b1b1e;\n}\n</style>\n</defs>\n<g id=\"Calque_1-2\" data-name=\"Calque 1\"><path fill=\"#fff1c9\" d=\"M326.46,12.69c13.46,2.79,41.08,9.2,49,19.51.96,1.25,2.09,2.83,2.09,4.64v99.34c.01,3.25-2.59,5.82-5.84,5.82H5.86C2.6,142,0,139.42,0,136.18V36.84c.01-1.81,1.14-3.38,2.1-4.64,7.86-10.28,35.56-16.73,48.99-19.51,13.58-2.81,27-4.69,40.96-6.4-1.68-1.24-2.19-3.31-1.01-4.93,1.11-1.52,3.37-1.82,4.86-.63s1.69,3.37.24,5.1l32.28-2.77c.35-1.88,1.64-2.99,3.27-3.05s2.96.93,3.53,2.68l31.84-1.24c.8-.95,1.7-1.41,2.71-1.44,1.12-.03,2.03.38,2.92,1.35h32.19c.89-.97,1.8-1.37,2.91-1.34,1.02.03,1.91.49,2.71,1.44l31.85,1.26c.54-1.77,1.85-2.76,3.51-2.7s2.9,1.17,3.28,3.06l32.3,2.77c-1.43-1.78-1.32-3.87.23-5.1s3.75-.88,4.85.63c1.18,1.63.67,3.69-1.01,4.92,13.96,1.73,27.38,3.59,40.95,6.4Z\"/>\n<path class=\"cls-4t\" d=\"M115.82 81.41H97.21Q95.89 81.41 95.89 80.09V56.4Q95.89 55.08 97.21 55.08H102.88Q104.19 55.08 104.19 56.4V74.5H109.2V68.57Q109.2 67.26 110.52 67.26H115.82Q117.14 67.26 117.14 68.57V80.09Q117.14 81.41 115.82 81.41Z M124.31 68.79H121.49Q120.18 68.79 120.18 67.48V66.01Q120.18 64.7 121.49 64.7H124.02Q125 64.7 125 63.67V63.12H121.02Q119.7 63.12 119.7 61.81V56.4Q119.7 55.08 121.02 55.08H128.41Q129.72 55.08 129.72 56.4V63.27Q129.72 66.05 128.26 67.42Q126.8 68.79 124.31 68.79Z M141.16 80.09Q141.16 81.41 139.85 81.41H134.47Q133.15 81.41 133.15 80.09V70.44Q133.15 69.34 133.5 67.92Q133.85 66.49 134.58 64.59L137.76 56.29Q138.16 55.08 139.63 55.08H149.47Q150.89 55.08 151.29 56.29L154.48 64.59Q155.21 66.49 155.55 67.92Q155.9 69.34 155.9 70.44V80.09Q155.9 81.41 154.58 81.41H149.06Q147.64 81.41 147.64 80.09V74.97H141.16ZM143.25 62.76 141.53 68.32H147.27L145.55 62.76Q145.3 62.14 144.86 62.14H143.94Q143.5 62.14 143.25 62.76Z M167.35 81.41H161.72Q160.4 81.41 160.4 80.09V56.4Q160.4 55.08 161.72 55.08H173.9Q176.64 55.08 178.21 55.85Q179.79 56.62 180.44 57.99Q181.1 59.36 181.1 61.19V62.87Q181.1 64.4 180.66 65.47Q180.22 66.53 179.05 67.04Q181.07 67.26 182.27 68.65Q183.48 70.04 183.48 72.34V80.09Q183.48 81.41 182.16 81.41H176.49Q175.18 81.41 175.18 80.09V74.5Q175.18 73.66 174.87 73.29Q174.56 72.93 173.79 72.93H168.67V80.09Q168.67 81.41 167.35 81.41ZM168.67 61.66V66.34H171.41Q172.36 66.34 172.69 65.85Q173.02 65.36 173.02 64.62V63.38Q173.02 62.65 172.69 62.16Q172.36 61.66 171.41 61.66Z M204.91 81.41H195.99Q191.38 81.41 189.19 79.58Q186.99 77.75 186.99 73.95V62.58Q186.99 58.74 189.19 56.91Q191.38 55.08 195.99 55.08H204.91Q206.23 55.08 206.23 56.4V60.82Q206.23 62.14 204.91 62.14H197.56Q195.33 62.14 195.33 63.97V72.67Q195.33 74.43 197.56 74.43H204.91Q206.23 74.43 206.23 75.74V80.09Q206.23 81.41 204.91 81.41Z M217.82 80.09Q217.82 81.41 216.5 81.41H211.13Q209.81 81.41 209.81 80.09V70.44Q209.81 69.34 210.16 67.92Q210.51 66.49 211.24 64.59L214.42 56.29Q214.82 55.08 216.28 55.08H226.12Q227.55 55.08 227.95 56.29L231.13 64.59Q231.86 66.49 232.21 67.92Q232.56 69.34 232.56 70.44V80.09Q232.56 81.41 231.24 81.41H225.72Q224.29 81.41 224.29 80.09V74.97H217.82ZM219.9 62.76 218.19 68.32H223.93L222.21 62.76Q221.95 62.14 221.51 62.14H220.6Q220.16 62.14 219.9 62.76Z M250.7 81.41H238.37Q237.06 81.41 237.06 80.09V56.4Q237.06 55.08 238.37 55.08H250.7Q255.3 55.08 257.5 56.91Q259.69 58.74 259.69 62.54V73.95Q259.69 77.75 257.5 79.58Q255.3 81.41 250.7 81.41ZM245.36 62.06V74.5H249.71Q251.43 74.5 251.43 72.71V63.82Q251.43 62.06 249.71 62.06Z M282.62 81.41H265.65Q264.34 81.41 264.34 80.09V56.4Q264.34 55.08 265.65 55.08H282.62Q283.94 55.08 283.94 56.4V60.67Q283.94 61.99 282.62 61.99H272.53V64.81H279.66Q280.98 64.81 280.98 66.12V70.04Q280.98 71.35 279.66 71.35H272.53V74.5H282.62Q283.94 74.5 283.94 75.81V80.09Q283.94 81.41 282.62 81.41Z\"/>\n<rect class=\"cls-11\" x=\"55.13\" y=\"30.83\" width=\"23.8\" height=\"5.95\"/>\n<rect class=\"cls-2\" x=\"304.57\" y=\"30.83\" width=\"17.85\" height=\"5.95\"/>\n<rect class=\"cls-11\" x=\"49.18\" y=\"36.78\" width=\"35.71\" height=\"5.95\"/>\n<rect class=\"cls-2\" x=\"298.62\" y=\"36.78\" width=\"29.75\" height=\"5.95\"/>\n<rect class=\"cls-11\" x=\"49.18\" y=\"42.73\" width=\"35.71\" height=\"5.95\"/>\n<rect class=\"cls-7\" x=\"298.62\" y=\"42.73\" width=\"29.75\" height=\"5.95\"/>\n<rect class=\"cls-11\" x=\"55.13\" y=\"48.68\" width=\"23.8\" height=\"5.95\"/>\n<rect class=\"cls-2\" x=\"298.62\" y=\"48.68\" width=\"29.75\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"61.08\" y=\"54.63\" width=\"11.9\" height=\"5.95\"/>\n<rect class=\"cls-2\" x=\"304.57\" y=\"54.63\" width=\"17.85\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"61.08\" y=\"60.58\" width=\"11.9\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"61.08\" y=\"66.53\" width=\"11.9\" height=\"5.95\"/>\n<rect class=\"cls-7\" x=\"304.57\" y=\"66.53\" width=\"17.85\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"61.08\" y=\"72.48\" width=\"11.9\" height=\"5.95\"/>\n<rect class=\"cls-7\" x=\"298.62\" y=\"72.48\" width=\"29.75\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"61.08\" y=\"78.44\" width=\"11.9\" height=\"5.95\"/>\n<rect class=\"cls-7\" x=\"298.62\" y=\"78.44\" width=\"29.75\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"55.13\" y=\"84.39\" width=\"23.8\" height=\"5.95\"/>\n<rect class=\"cls-7\" x=\"298.62\" y=\"84.39\" width=\"29.75\" height=\"5.95\"/>\n<rect class=\"cls-12\" x=\"49.18\" y=\"90.34\" width=\"35.71\" height=\"5.95\"/>\n<rect class=\"cls-7\" x=\"304.57\" y=\"90.34\" width=\"17.85\" height=\"5.95\"/>\n<rect class=\"cls-5\" x=\"298.62\" y=\"78.44\" width=\"29.75\" height=\"5.95\" transform=\"translate(394.91 -232.09) rotate(90)\"/>\n<g id=\"HvhUdA.tif\">\n<path class=\"cls-1\" d=\"M326.46,12.69c13.46,2.79,41.08,9.2,49,19.51.96,1.25,2.09,2.83,2.09,4.64v99.34c.01,3.25-2.59,5.82-5.84,5.82H5.86C2.6,142,0,139.42,0,136.18V36.84c.01-1.81,1.14-3.38,2.1-4.64,7.86-10.28,35.56-16.73,48.99-19.51,13.58-2.81,27-4.69,40.96-6.4-1.68-1.24-2.19-3.31-1.01-4.93,1.11-1.52,3.37-1.82,4.86-.63s1.69,3.37.24,5.1l32.28-2.77c.35-1.88,1.64-2.99,3.27-3.05s2.96.93,3.53,2.68l31.84-1.24c.8-.95,1.7-1.41,2.71-1.44,1.12-.03,2.03.38,2.92,1.35h32.19c.89-.97,1.8-1.37,2.91-1.34,1.02.03,1.91.49,2.71,1.44l31.85,1.26c.54-1.77,1.85-2.76,3.51-2.7s2.9,1.17,3.28,3.06l32.3,2.77c-1.43-1.78-1.32-3.87.23-5.1s3.75-.88,4.85.63c1.18,1.63.67,3.69-1.01,4.92,13.96,1.73,27.38,3.59,40.95,6.4ZM171.41,3.32c0-.83-.68-1.51-1.51-1.51s-1.51.67-1.51,1.51.68,1.51,1.51,1.51,1.51-.67,1.51-1.51ZM247.23,3.32c0-.83-.68-1.51-1.51-1.51s-1.51.67-1.51,1.51.68,1.51,1.51,1.51,1.51-.67,1.51-1.51ZM371.75,134.71c2.2-.24,3.98-1.6,3.98-3.73l-.03-94.13c0-2.2-1.77-4.08-3.04-5.46-4.08-4.42-13.12-8.07-19.15-10.13-18.27-6.24-41.07-9.91-60.42-12.35-14.8-1.86-29.38-3.07-44.31-4.1-.82,1.25-1.87,1.88-3.2,1.82s-2.37-.72-3.01-2.12l-31.5-1.23c-.15,2.13-1.69,3.42-3.55,3.35-1.76-.07-3.15-1.34-3.28-3.44h-30.91c-.19,2.21-1.69,3.49-3.55,3.43-1.75-.05-3.09-1.32-3.29-3.34l-31.49,1.23c-.67,1.43-1.74,2.08-3.01,2.13-1.37.05-2.37-.54-3.22-1.82-14.11.98-27.87,2.09-41.86,3.8-20.04,2.44-43.97,6.2-62.86,12.65-6.11,2.09-15.2,5.77-19.3,10.29-1.22,1.35-2.89,3.18-2.89,5.31l-.04,93.85c0,2.25,1.79,4,4.07,4h365.86Z\"/>\n<path class=\"cls-3\" d=\"M229.32,115.88c.29,1.42,1.8,3.53-.14,4.58-1.41.76-3.7.32-5.6.27l-.13-7.54c1.63-.24,3.39-.31,4.89.04,1.36.31.75,1.61.97,2.65Z\"/>\n<path class=\"cls-3\" d=\"M121.75,115.94c.96-.19,1.44.25,1.49.8.06.64-.33,1.28-1.51,1.07-1.3-.33-1.22,1.35.02.97l1.92.06c.49.02.62,1.69.12,1.79-1.82.37-3.64.26-5.51,0l.08-6.61,1-3.13,4.23-.47.04,1.71-3.93.53c1.23.7,2.67.24,4.06.45.35.05.46,1.31.23,1.58-.34.38-1.25.53-2.23.34-1.25-.36-1.28,1.25-.01.9Z\"/>\n<path class=\"cls-3\" d=\"M208.39,119.04c.05-1.1-1.84-1.07-1.88-.24-.03.76.03,1.57-.36,1.9s-2.05.22-2.05-.31v-7.25c1.82-.14,3.77-.36,5.32.3,1.09.47.41,2.17.65,2.85.52,1.47,1.43,3.15.39,4.47-.28.21-1.45.15-1.72-.03s-.4-.78-.36-1.7Z\"/>\n<path class=\"cls-3\" d=\"M247.09,120.57c-.45-1.4-.63-2.82-2.14-3.28.06,1.27.25,2.45-.25,3.36-.22.39-1.92.27-1.97-.18v-7.47c2.09-.21,2.84,1.18,3.91,2.52.21-.97.22-1.89.6-2.33.32-.37,1.92-.29,1.92.22l.03,7.01c0,.54-1.93.66-2.1.15Z\"/>\n<path class=\"cls-3\" d=\"M280.43,120.59c-.24-1.43-.62-2.83-2.05-3.29.04,1.28.25,2.44-.27,3.36-.22.39-1.97.27-1.97-.18v-7.47c2.08-.21,2.84,1.18,3.91,2.52.21-.98.21-1.87.6-2.33.32-.38,1.92-.28,1.93.22v7c0,.53-1.7.65-2.15.17Z\"/>\n<path class=\"cls-3\" d=\"M72.74,119.94c-1.46,1.67-4.36.78-6.01.7v-7.45c1.66-.12,4.48-.67,5.91.54,1.18,1.03,1.16,5.01.11,6.21ZM69.1,115.08v3.7h1.81v-3.7h-1.81Z\"/>\n<path class=\"cls-3\" d=\"M141.92,120.66c-.2.29-1.81.31-1.97.04-.48-.82-.05-2.25-.31-2.55-.2-.23-.88-.21-1.19-.14-.99.21,0,2.36-1.07,2.8-.39.16-1.82.07-1.82-.33v-7.33c.82-.18,1.29-.16,1.78-.1.98.12.35,2.17.73,2.57.22.23.84.26,1.25.16.74-.19.04-2.27.77-2.61.45-.21,1.19-.26,1.98.03.04,2.44.37,4.99-.17,7.46Z\"/>\n<path class=\"cls-3\" d=\"M308.92,120.54c-.27-1.09-.37-1.6-.93-1.67-.93-.12-1.35.29-1.36,1.44,0,.69-1.93.79-2.05.27-.6-2.44-.06-5.28,1.45-7.31.71-.45,2.67-.43,3.42-.01,1.5,2.04,1.99,4.87,1.51,7.37-.36.36-1.93.38-2.04-.08Z\"/>\n<path class=\"cls-3\" d=\"M80.88,120.54c-.24-1.09-.38-1.6-.93-1.67-.93-.12-1.35.29-1.36,1.44,0,.69-1.92.79-2.05.27-.6-2.44-.06-5.29,1.45-7.31.71-.45,2.68-.43,3.42-.01,1.51,2.04,1.99,4.87,1.52,7.36-.36.36-1.94.38-2.04-.08Z\"/>\n<path class=\"cls-3\" d=\"M63.16,119.9c-.86,1.56-4.82,1.49-5.64.07-.92-1.58-.95-4.6.02-6.15.86-1.37,4.59-1.38,5.55,0s1.01,4.36.07,6.08ZM59.42,115v3.89s1.81,0,1.81,0v-3.89s-1.81,0-1.81,0Z\"/>\n<path class=\"cls-3\" d=\"M200.28,119.9c-.86,1.56-4.82,1.49-5.64.07-.92-1.58-.95-4.6.02-6.15.86-1.37,4.59-1.38,5.55,0s1.01,4.36.07,6.08ZM196.54,115v3.89s1.81,0,1.81,0v-3.89s-1.81,0-1.81,0Z\"/>\n<path class=\"cls-3\" d=\"M219.75,119.88c-.68,1.5-4.71,1.56-5.64.22-1.03-1.48-1-4.52-.12-6.14.84-1.53,4.78-1.51,5.72-.04.89,1.38.85,4.16.04,5.97ZM217.79,115h-1.85v3.88h1.85v-3.88Z\"/>\n<path class=\"cls-3\" d=\"M270.77,120.53l-.38-1.4c-.11-.39-1.35-.45-1.59.16-.21.54-.21,1.09-.4,1.32-.2.24-.94.32-1.78.21-.82-2.41-.12-5.1,1.15-7.56,1.25-.4,2.49-.4,3.75,0,1.26,2.37,1.89,4.84,1.29,7.46-.54.18-1.88.4-2.04-.19Z\"/>\n<path class=\"cls-3\" d=\"M237.33,120.53l-.37-1.39c-.11-.42-1.36-.43-1.59.16-.21.54-.22,1.1-.41,1.32s-.94.32-1.78.21c-.82-2.41-.12-5.1,1.15-7.56,1.25-.4,2.49-.4,3.75,0,1.26,2.37,1.89,4.84,1.29,7.46-.55.17-1.42.31-2.05-.2Z\"/>\n<path class=\"cls-3\" d=\"M289.47,118.43c.26-.79.32-1.52.83-1.69.56-.19,1.7-.09,1.81.45.25,1.17.16,2.12.01,3.44-1.56.16-4.41.84-5.76-.64-1.11-1.22-.85-4.55-.2-5.94.68-1.46,4.95-1.14,5.22-.77.22.3.21.99.1,1.36-.3.98-2.45.1-3.08.76-.34.35-.29,1.26-.22,1.93l.11,1.08c.03.3.93.78,1.18.02Z\"/>\n<path class=\"cls-3\" d=\"M188.02,120.83l-2.31-.11c-.51-.02-.54-1.76.05-1.81l3.11-.25c-.76-1.12-1.96-.71-2.7-1.18-1.2-.77-1.13-3.38.03-4.02,1.31-.71,3.03-.53,4.4-.29.6.11.62,1.12.42,1.46-.51.86-4.48.02-1.99,1.36,2.02-.21,2.52,1.3,2.46,2.55-.09,1.77-1.28,2.39-3.48,2.28Z\"/>\n<path class=\"cls-3\" d=\"M98.67,117.81c-1.12-.23-1.14,1.26.03,1.02.79-.16,1.74-.05,2.27.08.41.1.43,1.47.05,1.7-1.64.42-3.63.23-5.53.12l-.07-7.5c1.74-.25,3.76-.48,5.56.09.42.13.43,1.53,0,1.62-.59.13-1.46.27-2.29.08-1.14-.25-1.12,1.16-.02.92.73-.16,1.38.02,1.56.27s.18,1.1,0,1.35-.84.4-1.56.25Z\"/>\n<path class=\"cls-3\" d=\"M148.8,117.81c-1.13-.23-1.14,1.26.03,1.02.75-.16,1.77-.05,2.26.08.42.11.43,1.47.05,1.7-1.63.41-3.62.22-5.53.12l-.07-7.5c1.74-.25,3.76-.48,5.56.09.42.13.41,1.53,0,1.62-.51.11-1.49.26-2.28.08-1.15-.26-1.13,1.16-.02.92.73-.16,1.38.02,1.56.27s.19,1.09,0,1.35-.84.4-1.56.25Z\"/>\n<path class=\"cls-3\" d=\"M89.8,118.56c.31-.86.27-1.41.48-1.68s1.5-.4,1.78-.01c.69.93.47,2.52.18,3.83-1.56.05-4.21.74-5.58-.6-1.13-1.11-1.07-4.88-.14-6.16,1.04-1.43,3.74-.98,5.02-.68.29.41.31,1.03.17,1.27-.57.98-2.56.26-3.04.83-.22.26-.36.99-.3,1.52l.18,1.68c.03.31,1.08.47,1.24,0Z\"/>\n<path class=\"cls-3\" d=\"M165,120.83l-1.99-.05c-.45-.01-.89-1.42-.04-1.89.66-.36,2.37.48,3.14-.5-1.13-.67-2.61-.54-3.08-1.12-.69-.85-.66-2.48-.12-3.36.64-1.06,3.95-1.13,4.91-.79.43.15.57,1.2.32,1.57-.56.84-2.4.07-2.92.51-1.02.86,2.56.39,3.13,1.72.39.91.38,2.08,0,2.91-.46.97-1.88,1.04-3.35,1.01Z\"/>\n<path class=\"cls-3\" d=\"M324.73,120.83l-1.98-.05c-.46-.01-.88-1.43-.04-1.89.66-.36,2.38.47,3.14-.5-1.13-.67-2.61-.55-3.07-1.11-.73-.89-.66-2.48-.12-3.37.63-1.06,3.95-1.13,4.91-.79.43.15.57,1.2.32,1.57-.56.84-2.4.07-2.92.51-1.02.86,2.56.39,3.13,1.72.39.91.38,2.08,0,2.91-.46.97-1.88,1.04-3.35,1.01Z\"/>\n<path class=\"cls-3\" d=\"M299.29,118.53c.06-.8.17-1.62.53-1.84.32-.2,1.3-.16,1.68.08.45,1.2.3,2.54.13,3.96h-6.13s.01-7.56.01-7.56c.85-.21,1.49-.2,2.3,0l.1,5.54c.42.25,1.21.17,1.38-.17Z\"/>\n<path class=\"cls-3\" d=\"M51.01,115.39c-.31.26-.38,2.46-.07,3,.49.86,3.06-.26,3.14,1.19.12,2.13-4.77,1.44-5.32.2-.68-1.54-.69-4.24.02-5.77.55-1.17,5.31-1.82,5.31.17,0,1.71-2.18.46-3.07,1.21Z\"/>\n<path class=\"cls-3\" d=\"M129.65,115.39c-.31.26-.38,2.46-.07,3,.49.86,3.06-.26,3.14,1.19.12,2.13-4.77,1.44-5.32.2-.68-1.54-.69-4.24.02-5.77.55-1.17,5.31-1.82,5.31.17,0,1.71-2.18.46-3.07,1.21Z\"/>\n<path class=\"cls-3\" d=\"M318.9,120.52c-1.2.67-3.37.31-4.64.14-.4-.05-.45-1.25-.17-1.46l1.07-.78c.52-.78.52-2.28,0-3.04l-1.1-.79c-.26-.19-.15-1.41.17-1.45,3.18-.39,5.42-.35,5.13,1.04-.11.53-.46.68-1.1,1.16s-.8,2.62.08,3.15c.59.35,1.72,1.37.56,2.02Z\"/>\n<path class=\"cls-3\" d=\"M158.11,118.79c.7-.06,1.5-.08,1.74.32.18.29.2,1.08-.06,1.44-.34.48-4.46.61-5.05-.64-.69-1.47-.93-4.56.11-6.01.91-1.26,3.82-1.12,4.93-.52.44.23.17,1.69-.24,1.7l-1.63.02c-1.27.01-1.17.91-1.22,1.57-.07.87-.35,2.29,1.41,2.13Z\"/>\n<rect class=\"cls-3\" x=\"108.19\" y=\"115.47\" width=\"2.95\" height=\"2.96\"/>\n<rect class=\"cls-3\" x=\"175.52\" y=\"115.47\" width=\"2.95\" height=\"2.96\"/>\n<circle class=\"cls-3\" cx=\"257.84\" cy=\"116.94\" r=\"1.64\"/>\n<rect class=\"cls-3\" x=\"69.1\" y=\"115.08\" width=\"1.81\" height=\"3.7\"/>\n<rect class=\"cls-3\" x=\"58.38\" y=\"116.03\" width=\"3.89\" height=\"1.82\" transform=\"translate(-56.71 177.09) rotate(-89.91)\"/>\n<rect class=\"cls-3\" x=\"195.51\" y=\"116.03\" width=\"3.89\" height=\"1.82\" transform=\"translate(80.2 314.21) rotate(-89.91)\"/>\n<rect class=\"cls-3\" x=\"215.94\" y=\"115\" width=\"1.85\" height=\"3.88\"/>\n</g>\n</g>\n</svg>";
+document.body.style.setProperty('--bgimg', `url(${A.bg})`);
+document.getElementById('logo').innerHTML = LOGO_SVG;
+
+/* ---------- Progression (enregistrée sur la tablette) ---------- */
+const CAHIER_KEY = 'arcade-cahier';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const C = () => { const c = read(CAHIER_KEY) || {}; c.seances = c.seances || {}; return c; };
+const info = n => SEANCES.find(s => s.n === n) || {n};
+const state = s => (s.cle && read(s.cle)) || null;
+const isDone = n => !!(C().seances[n] && C().seances[n].done);
+const isOpen = n => !!info(n).url && (n === 1 || isDone(n - 1));
+const status = n => isDone(n) ? 'done' : isOpen(n) ? 'open' : 'lock';
+function points(n){
+  const r = C().seances[n]; if (r && r.done) return r.pts || 0;
+  const st = state(info(n)); return st && st.pts ? Object.values(st.pts).reduce((a,b) => a + b, 0) : 0;
+}
+let sel = 1;
+
+function render(){
+  const c = C();
+  const doneCount = Array.from({length:TOTAL}, (_,i) => isDone(i+1)).filter(Boolean).length;
+  $('#total').textContent = Array.from({length:TOTAL}, (_,i) => points(i+1)).reduce((a,b) => a + b, 0);
+  $('#bar').innerHTML = Array.from({length:TOTAL}, (_,i) => `<i class="${isDone(i+1) ? 'on' : ''}"></i>`).join('');
+  $('#pct').textContent = `${doneCount} / ${TOTAL} validée${doneCount > 1 ? 's' : ''}`;
+
+  // « Tu étais ici la dernière fois » ou « Ta prochaine séance »
+  const nextOpen = Array.from({length:TOTAL}, (_,i) => i+1).find(n => status(n) === 'open');
+  const last = c.last && !isDone(c.last.n) && isOpen(c.last.n) ? c.last : null;
+  const r = $('#resume');
+  if (last || nextOpen){
+    const s = info(last ? last.n : nextOpen);
+    const where = last && s.ecrans && s.ecrans[last.screen];
+    r.innerHTML = `<img src="${A.prof}" alt="">
+      <div class="txt"><span class="k">${last ? 'TU ÉTAIS ICI LA DERNIÈRE FOIS' : 'TA PROCHAINE SÉANCE'}</span>
+        <span class="t">Séance ${s.n} · ${esc(s.titre)}</span>${where ? `<span class="s">${esc(where)}</span>` : ''}</div>
+      <a class="btn go" href="${esc(s.url)}">${last ? 'Reprendre' : 'Commencer'} ▶</a>`;
+    r.hidden = false;
+  } else r.hidden = true;
+
+  // Séance mise en avant
+  const s = info(sel), st = status(sel), stt = state(s) || {};
+  const ribbon = {done:'SÉANCE VALIDÉE ★', open:'À TOI DE JOUER !', lock: s.url ? 'PAS ENCORE TON TOUR' : 'BIENTÔT'}[st];
+  const pic = s.url ? `<img src="${A.saturne}" alt="" style="left:10%;top:12%;width:22%"><img src="${A.terre}" alt="" style="right:10%;bottom:12%;width:16%"><img src="${A.prof}" alt="" style="left:38%;top:20%;width:24%"><img src="${A[s.image] || A.fusee}" alt="" style="right:18%;top:14%;width:12%">`
+                    : `<img src="${A.prof}" alt="" style="left:38%;top:20%;width:24%;opacity:.5">`;
+  const etapes = (s.etapes || []).map(e => {
+    const ok = e.pts.every(k => stt.pts && k in stt.pts);
+    const b = ok ? '<span class="badge ok">RÉUSSI ✓</span>' : st === 'lock' ? '<span class="badge">PAS ENCORE</span>' : '<span class="badge todo">À FAIRE</span>';
+    return `<li><span class="ic"><img src="${A[e.img] || A.fusee}" alt=""></span><span class="nm">${esc(e.nom)}</span><span class="lv">${esc(e.niveau)}</span>${b}</li>`;
+  }).join('');
+  const pts = points(sel);
+  $('#feature').innerHTML = `
+    <div class="scard ${st}">
+      <div class="top">SÉANCE ${sel}</div>
+      <div class="ribbon ${st}">${ribbon}</div>
+      <div class="pic">${pic}</div>
+      <div class="name">${esc(s.titre || 'Bientôt')}</div>
+    </div>
+    <div class="paper detail">
+      ${s.url ? `
+        <p>${esc(s.resume)}</p>
+        ${s.mot ? `<div class="motdujour">Le mot du jour : <b>${esc(s.mot)}</b></div>` : ''}
+        ${etapes ? `<ul class="etapes">${etapes}</ul>` : ''}
+        <div class="actions">
+          ${st === 'lock' ? `<span class="locknote">Pour ouvrir cette séance, termine d'abord la séance ${sel - 1}.</span>`
+            : `<a class="btn go" href="${esc(s.url)}">${st === 'done' ? 'Rejouer' : (stt.screen && stt.screen !== 'intro' ? 'Reprendre' : 'Jouer')} ▶</a>`}
+          ${pts ? `<span class="pts">★ ${pts} / ${s.max || 20} pts</span>` : ''}
+        </div>`
+      : `<p>Cette séance arrive bientôt ! Le Professeur Pile Poil prépare la suite de l'aventure.</p>
+         <span class="locknote">Continue les séances d'avant en attendant.</span>`}
+    </div>`;
+  $('#pos').textContent = `${sel} / ${TOTAL}`;
+  $('#prev').disabled = sel <= 1; $('#next').disabled = sel >= TOTAL;
+
+  // Toutes les pages
+  $('#pages').innerHTML = Array.from({length:TOTAL}, (_,i) => {
+    const n = i + 1, t = status(n), sI = info(n);
+    const label = t === 'done' ? `★ ${points(n)} pts` : t === 'open' ? 'À TOI !' : sI.url ? 'PAS ENCORE' : 'BIENTÔT';
+    return `<button class="page ${t} ${n === sel ? 'sel' : ''}" data-n="${n}" aria-label="Séance ${n}">${t === 'lock' ? '<span aria-hidden="true">🔒</span>' : ''}<span class="n">${n}</span><span class="st">${label}</span></button>`;
+  }).join('');
+}
+
+$('#pages').onclick = e => { const b = e.target.closest('.page'); if (!b) return; sel = +b.dataset.n; render(); $('#feature').scrollIntoView({behavior:'smooth', block:'start'}); };
+$('#prev').onclick = () => { if (sel > 1){ sel--; render(); } };
+$('#next').onclick = () => { if (sel < TOTAL){ sel++; render(); } };
+
+/* ---------- Menu intervenant : nouvel enfant ---------- */
+$('#adultBtn').onclick = () => {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="panel"><h2>MENU INTERVENANT</h2>
+    <p>« Nouvel enfant » efface la progression et les points de toutes les séances sur cette tablette. Les textes modifiés sont gardés.</p>
+    <div class="actions"><button class="btn reset">Nouvel enfant</button><button class="btn ghost close">Fermer</button></div>
+    <p class="confirm" hidden style="color:var(--pink)">Appuie encore sur « Nouvel enfant » pour confirmer.</p></div>`;
+  let armed = false;
+  ov.querySelector('.close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.querySelector('.reset').onclick = () => {
+    if (!armed){ armed = true; ov.querySelector('.confirm').hidden = false; return; }
+    try { localStorage.removeItem(CAHIER_KEY); SEANCES.forEach(s => s.cle && localStorage.removeItem(s.cle)); } catch(e) {}
+    ov.remove(); sel = 1; render();
+  };
+  document.body.appendChild(ov);
+};
+
+/* Séance affichée au départ : celle en cours, sinon la prochaine à faire */
+(() => { const c = C(); const n = c.last && !isDone(c.last.n) ? c.last.n : Array.from({length:TOTAL}, (_,i) => i+1).find(n => status(n) === 'open'); if (n) sel = n; })();
+render();
+window.addEventListener('pageshow', render);   // à jour quand on revient d'une séance
+</script>
+</body>
+</html>
